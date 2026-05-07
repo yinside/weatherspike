@@ -3,287 +3,164 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Polymarket 温度市场监控</title>
+<title>SpikeWatch — Polymarket 温度监控</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-
 :root {
-  --bg: #0c0e14;
-  --bg-card: rgba(20,22,30,0.7);
-  --bg-card-hover: rgba(99,102,241,0.05);
-  --bg-header: linear-gradient(135deg, #1a1d26, #15171f);
-  --bg-city-header: rgba(30,33,48,0.5);
-  --bg-input: rgba(30,33,48,0.8);
-  --bg-btn: rgba(255,255,255,0.04);
-  --bg-spike-row: rgba(239,68,68,0.06);
-  --bg-spike-card: rgba(239,68,68,0.1);
-  --bg-toast: #1a1d2e;
-
-  --text-primary: #e4e6ec;
-  --text-body: #c8ccd4;
-  --text-secondary: #8892b0;
-  --text-muted: #6b7280;
-  --text-dim: #5a6070;
-  --text-faint: #4b5563;
-  --text-fainter: #374151;
-
-  --border-subtle: rgba(255,255,255,0.03);
-  --border-card: rgba(255,255,255,0.05);
-  --border-btn: rgba(255,255,255,0.1);
-  --border-spike: rgba(239,68,68,0.12);
-  --border-input: rgba(255,255,255,0.08);
-  --border-temp: rgba(255,255,255,0.015);
-  --border-toast: rgba(239,68,68,0.3);
-
-  --scroll-thumb: #2a2d35;
-
-  --price-hot: #f87171;
-  --price-warm: #fbbf24;
-  --price-high: #34d399;
-
+  --bg: #0b0d12; --bg-surface: #11141b; --bg-card: #171a23;
+  --bg-card-hover: #1c1f2a; --bg-input: #1a1d28; --bg-tag: rgba(99,102,241,0.1);
+  --bg-green: rgba(34,197,94,0.1); --bg-red: rgba(239,68,68,0.08);
+  --text-primary: #eef0f6; --text-body: #bcc0cc; --text-secondary: #8b90a0;
+  --text-muted: #5e6373; --text-faint: #3e4252;
+  --border-subtle: rgba(255,255,255,0.04); --border-card: rgba(255,255,255,0.06);
+  --border-input: rgba(255,255,255,0.08); --border-focus: rgba(99,102,241,0.3);
+  --accent: #6366f1; --accent-glow: rgba(99,102,241,0.15); --accent-text: #a5b4fc;
+  --danger: #ef4444; --danger-glow: rgba(239,68,68,0.12); --danger-text: #f87171;
+  --success: #22c55e; --success-text: #4ade80; --warn: #f59e0b;
+  --radius-sm: 6px; --radius-md: 10px; --shadow-card: 0 1px 3px rgba(0,0,0,0.3);
   color-scheme: dark;
 }
-
 @media (prefers-color-scheme: light) {
   :root {
-    --bg: #f2f2f7;
-    --bg-card: rgba(255,255,255,0.85);
-    --bg-card-hover: rgba(99,102,241,0.06);
-    --bg-header: linear-gradient(135deg, #e8e8ed, #dddde3);
-    --bg-city-header: rgba(240,240,246,0.7);
-    --bg-input: #fff;
-    --bg-btn: rgba(0,0,0,0.04);
-    --bg-spike-row: rgba(239,68,68,0.05);
-    --bg-spike-card: rgba(239,68,68,0.06);
-    --bg-toast: #fff;
-
-    --text-primary: #1c1c1e;
-    --text-body: #2c2c2e;
-    --text-secondary: #555;
-    --text-muted: #888;
-    --text-dim: #999;
-    --text-faint: #aaa;
-    --text-fainter: #bbb;
-
-    --border-subtle: rgba(0,0,0,0.04);
-    --border-card: rgba(0,0,0,0.06);
-    --border-btn: rgba(0,0,0,0.1);
-    --border-spike: rgba(239,68,68,0.15);
-    --border-input: rgba(0,0,0,0.1);
-    --border-temp: rgba(0,0,0,0.04);
-    --border-toast: rgba(239,68,68,0.2);
-
-    --scroll-thumb: #ccc;
-
-    --price-hot: #dc2626;
-    --price-warm: #d97706;
-    --price-high: #059669;
-
-    color-scheme: light;
+    --bg: #f4f4f8; --bg-surface: #fafafe; --bg-card: #ffffff;
+    --bg-card-hover: #f8f8fc; --bg-input: #f0f0f4; --bg-tag: rgba(99,102,241,0.08);
+    --bg-green: rgba(34,197,94,0.08); --bg-red: rgba(239,68,68,0.05);
+    --text-primary: #1a1a2e; --text-body: #3a3a4e; --text-secondary: #6a6a7e;
+    --text-muted: #999aac; --text-faint: #c0c0ce;
+    --border-subtle: rgba(0,0,0,0.04); --border-card: rgba(0,0,0,0.08);
+    --border-input: rgba(0,0,0,0.1); --border-focus: rgba(99,102,241,0.23);
+    --accent-glow: rgba(99,102,241,0.06); --danger-glow: rgba(239,68,68,0.06);
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.06); color-scheme: light;
   }
 }
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  background: var(--bg);
-  color: var(--text-body);
-  font-size: 13px;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif; background: var(--bg); color: var(--text-body); font-size: 13px; line-height: 1.5; min-height: 100vh; display: flex; flex-direction: column; }
 body::-webkit-scrollbar { width: 4px; }
-body::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 2px; }
+body::-webkit-scrollbar-thumb { background: var(--text-faint); border-radius: 2px; }
 
-header {
-  background: var(--bg-header);
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--border-card);
-  flex-shrink: 0;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-.header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.header-left { display: flex; align-items: center; gap: 10px; }
-.logo {
-  width: 28px; height: 28px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 14px; font-weight: 800; color: #fff;
-}
-h1 { font-size: 16px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.3px; }
-.status-row {
-  display: flex; align-items: center;
-  gap: 8px; margin-top: 6px; font-size: 12px; color: var(--text-dim);
-}
-.status-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: #22c55e; animation: pulse 2s infinite;
-}
-.status-dot.error { background: #ef4444; animation: none; }
-.status-dot.warn { background: #f59e0b; animation: none; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+/* Header */
+header { background: var(--bg-surface); padding: 10px 18px; border-bottom: 1px solid var(--border-card); flex-shrink: 0; position: sticky; top: 0; z-index: 10; }
+.header-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand-icon { width: 28px; height: 28px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: #fff; box-shadow: 0 2px 8px var(--accent-glow); }
+.brand h1 { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.actions { display: flex; gap: 6px; }
+.btn { padding: 5px 12px; border: 1px solid var(--border-input); border-radius: var(--radius-sm); background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 11px; font-weight: 500; transition: all .15s; white-space: nowrap; }
+.btn:hover { border-color: var(--border-focus); color: var(--accent-text); background: var(--accent-glow); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.btn.primary:hover { background: #4f46e5; }
+.btn.danger:hover { border-color: rgba(239,68,68,0.3); color: var(--danger-text); background: var(--danger-glow); }
 
-.controls { display: flex; gap: 8px; flex-shrink: 0; }
-.btn {
-  padding: 6px 14px; border: 1px solid var(--border-btn);
-  border-radius: 8px; background: var(--bg-btn);
-  color: var(--text-muted); cursor: pointer;
-  font-size: 12px; font-weight: 500; transition: all 0.2s; white-space: nowrap;
-}
-.btn:hover { border-color: rgba(165,180,252,0.25); color: #a5b4fc; background: rgba(99,102,241,0.08); }
-.btn.danger:hover { border-color: rgba(239,68,68,0.3); color: #f87171; background: rgba(239,68,68,0.08); }
+.status-bar { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 10px; }
+.status-pill { display: flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 99px; background: var(--bg-card); border: 1px solid var(--border-card); font-size: 10px; color: var(--text-secondary); }
+.status-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--success); }
+.status-dot.error { background: var(--danger); }
+.status-dot.warn { background: var(--warn); }
+.api-pill { margin-left: auto; display: flex; align-items: center; gap: 3px; font-size: 9px; color: var(--text-muted); padding: 2px 8px; border-radius: 99px; background: var(--bg-card); border: 1px solid var(--border-card); font-family: Menlo, Monaco, monospace; }
+.api-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--warn); }
+.api-dot.ok { background: var(--success); }
+.api-dot.error { background: var(--danger); }
 
+/* Layout */
 .main-layout { display: flex; flex: 1; overflow: hidden; }
-.content { flex: 1; padding: 12px 16px; overflow-y: auto; max-width: 900px; }
+.content { flex: 1; padding: 12px 16px; overflow-y: auto; }
+.sidebar { width: 350px; flex-shrink: 0; border-left: 1px solid var(--border-card); padding: 12px; overflow-y: auto; background: var(--bg-surface); }
 
-.city-group {
-  border: 1px solid var(--border-card);
-  border-radius: 12px; overflow: hidden;
-  background: var(--bg-card); margin-bottom: 10px;
-}
-.city-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 16px; background: var(--bg-city-header);
-  border-bottom: 1px solid var(--border-subtle);
-  cursor: pointer; user-select: none;
-}
-.city-name { font-size: 14px; font-weight: 600; color: var(--text-secondary); }
-.city-date { font-size: 11px; color: var(--text-faint); margin-left: 8px; }
-.city-arrow {
-  font-size: 10px; color: var(--text-faint);
-  transition: transform 0.2s;
-}
-.city-group.collapsed .city-arrow { transform: rotate(-90deg); }
-.city-group.collapsed .temp-list { display: none; }
+/* Wallet bar */
+.wallet-bar { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
+.wallet-input { flex: 1; min-width: 260px; padding: 6px 10px; background: var(--bg-input); border: 1px solid var(--border-input); border-radius: var(--radius-sm); color: var(--text-body); font-size: 11px; font-family: Menlo, Monaco, monospace; }
+.wallet-input:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 2px var(--accent-glow); }
+.wallet-input::placeholder { color: var(--text-faint); font-family: -apple-system, sans-serif; font-size: 10px; }
 
-.temp-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-}
+/* Feed */
+.feed-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.feed-title { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .5px; }
+.feed-count { font-size: 10px; font-weight: 600; color: var(--accent-text); background: var(--bg-tag); padding: 1px 7px; border-radius: 99px; }
 
-.temp-row {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 8px 14px; gap: 8px;
-  border-right: 1px solid var(--border-temp);
-  border-bottom: 1px solid var(--border-temp);
-  transition: background 0.15s;
-}
-.temp-row:hover { background: var(--bg-card-hover); }
-.temp-row.spiked {
-  background: var(--bg-spike-card);
-  box-shadow: inset 2px 0 0 rgba(239,68,68,0.5);
-}
+.trade-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--border-subtle); transition: background .1s; }
+.trade-row:hover { background: var(--bg-card-hover); }
+.trade-row.temp { background: var(--bg-red); border-left: 2px solid var(--danger); }
+.trade-row .trade-avatar { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; flex-shrink: 0; cursor: pointer; transition: transform .15s; }
+.trade-row .trade-avatar:hover { transform: scale(1.1); }
+.trade-row .trade-avatar.active { box-shadow: 0 0 0 2px var(--accent-text); }
+.trade-body { flex: 1; min-width: 0; }
+.trade-user { font-size: 12px; font-weight: 700; color: var(--accent-text); cursor: pointer; display: inline; }
+.trade-user:hover { text-decoration: underline; }
+.trade-action { font-size: 12px; color: var(--text-body); }
+.trade-action .buy { color: var(--success-text); font-weight: 600; }
+.trade-action .sell { color: var(--danger-text); font-weight: 600; }
+.trade-action .city-name { color: var(--text-primary); font-weight: 600; }
+.trade-action .outcome { font-size: 10px; padding: 1px 5px; border-radius: 99px; margin: 0 2px; }
+.trade-action .outcome.yes { background: rgba(34,197,94,0.12); color: var(--success-text); }
+.trade-action .outcome.no { background: rgba(239,68,68,0.12); color: var(--danger-text); }
+.trade-right { text-align: right; flex-shrink: 0; }
+.trade-value { font-family: Menlo, Monaco, monospace; font-size: 12px; font-weight: 700; color: var(--text-body); }
+.trade-shares { font-size: 10px; color: var(--text-faint); }
+.trade-time { font-size: 9px; color: var(--text-faint); margin-top: 1px; }
+.trade-temp-badge { font-size: 9px; color: var(--danger-text); }
 
-.temp-label {
-  font-size: 13px; font-weight: 500; color: var(--text-secondary);
-  display: flex; align-items: center; gap: 4px; flex-shrink: 0;
-}
-.temp-label .deg { color: var(--text-dim); font-size: 11px; }
-.temp-label .below { font-size: 10px; color: var(--text-faint); }
+/* Position panel (expandable) */
+.pos-overlay { display: none; }
+.pos-overlay.open { display: block; }
+.pos-panel { margin: 0 0 14px 0; border: 1px solid var(--border-card); border-radius: var(--radius-md); overflow: hidden; background: var(--bg-card); }
+.pos-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg-surface); border-bottom: 1px solid var(--border-subtle); }
+.pos-panel-title { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+.pos-panel-close { cursor: pointer; font-size: 14px; color: var(--text-faint); line-height: 1; }
+.pos-panel-close:hover { color: var(--danger-text); }
+.pos-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 14px; border-bottom: 1px solid var(--border-subtle); gap: 10px; }
+.pos-row:last-child { border-bottom: none; }
+.pos-info { min-width: 0; flex: 1; }
+.pos-title { font-size: 11px; font-weight: 600; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 360px; }
+.pos-meta { font-size: 9px; color: var(--text-faint); margin-top: 1px; }
+.pos-right { text-align: right; flex-shrink: 0; }
+.pos-pnl { font-family: Menlo, Monaco, monospace; font-size: 11px; font-weight: 700; }
+.pos-pnl.positive { color: var(--success-text); }
+.pos-pnl.negative { color: var(--danger-text); }
+.pos-size { font-size: 9px; color: var(--text-muted); }
 
-.temp-price {
-  font-family: Menlo, Monaco, 'Courier New', monospace;
-  font-size: 14px; font-weight: 600; white-space: nowrap; transition: color 0.3s;
-}
-.temp-price.hot { color: var(--price-hot); font-weight: 700; }
-.temp-price.warm { color: var(--price-warm); }
-.temp-price.normal { color: var(--text-muted); }
-.temp-price.high { color: var(--price-high); }
+/* Sidebar cards */
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.section-title { font-size: 10px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .5px; }
+.spike-card { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-md); padding: 10px 12px; margin-bottom: 5px; position: relative; overflow: hidden; }
+.spike-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--danger); opacity:0; transition:opacity .2s; }
+.spike-card:hover::before { opacity:1; }
+.spike-card.spike-new { border:2px solid rgba(239,68,68,0.4); animation:flash 1.5s ease-in-out 7; }
+.spike-card.spike-new::before { opacity:1; }
+@keyframes flash { 0%,100%{border-color:rgba(239,68,68,0.5);box-shadow:0 0 16px rgba(239,68,68,0.2)} 50%{border-color:rgba(239,68,68,0.12);box-shadow:0 0 4px rgba(239,68,68,0.03)} }
+.spike-name { font-size:12px; font-weight:700; color:var(--text-primary); }
+.spike-meta { display:flex; align-items:center; justify-content:space-between; margin-top:4px; font-size:10px; }
+.spike-pct { font-family:Menlo,Monaco,monospace; font-weight:800; color:var(--danger-text); }
+.spike-range { color:var(--text-secondary); }
+.spike-range strong { color:var(--text-body); }
+.spike-date { color:var(--text-faint); }
 
-.temp-change { font-size: 10px; font-weight: 600; white-space: nowrap; }
-.temp-change.up { color: var(--price-hot); }
-.temp-change.down { color: var(--price-high); }
+/* City picker */
+.city-section { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-card); }
+.city-title-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.city-title { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; }
+.city-count { font-size: 9px; font-weight: 600; color: var(--accent-text); background: var(--bg-tag); padding: 1px 6px; border-radius: 99px; }
+.city-tags { display: flex; flex-wrap: wrap; gap: 3px; max-height: 180px; overflow-y: auto; margin-bottom: 8px; }
+.city-tags::-webkit-scrollbar { width: 3px; }
+.city-tags::-webkit-scrollbar-thumb { background: var(--text-faint); border-radius: 2px; }
+.city-tag { display: flex; align-items: center; gap: 2px; padding: 2px 7px; border-radius: 99px; font-size: 10px; font-weight: 500; cursor: pointer; user-select: none; white-space: nowrap; border: 1px solid var(--border-input); color: var(--text-muted); transition: all .15s; }
+.city-tag:hover { border-color: var(--border-focus); }
+.city-tag.on { border-color: var(--accent); background: var(--bg-tag); color: var(--accent-text); }
+.city-tag .tag-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--text-faint); }
+.city-tag.on .tag-dot { background: var(--accent); }
+.city-actions { display: flex; gap: 4px; }
 
-.badge {
-  display: inline-block; padding: 1px 6px;
-  border-radius: 4px; font-size: 10px; font-weight: 600;
-}
-.badge-warn { background: rgba(239,68,68,0.15); color: var(--price-hot); }
+/* Toast */
+.toast-container { position: fixed; top: 12px; right: 12px; z-index: 999; display: flex; flex-direction: column; gap: 6px; max-width: 340px; }
+.toast { background: var(--bg-card); border: 1px solid rgba(239,68,68,0.3); border-left: 3px solid var(--danger); border-radius: var(--radius-md); padding: 12px 14px; animation: slideIn .35s; box-shadow: 0 8px 32px rgba(239,68,68,0.1); }
+@keyframes slideIn { from{opacity:0;transform:translateX(40px)} to{opacity:1;transform:translateX(0)} }
+.toast-title { font-size: 12px; font-weight: 700; color: var(--danger-text); }
+.toast-detail { margin-top: 4px; font-family: Menlo, Monaco, monospace; font-size: 16px; font-weight: 700; color: var(--danger-text); }
 
-/* Sidebar: spike log */
-.sidebar {
-  width: 280px; flex-shrink: 0;
-  border-left: 1px solid var(--border-card);
-  padding: 12px 14px; overflow-y: auto;
-  background: var(--bg-card);
-}
-.sidebar-title {
-  font-size: 13px; font-weight: 600; color: var(--text-faint);
-  margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
-}
-.spike-log-item {
-  padding: 8px 10px; margin-bottom: 4px;
-  background: var(--bg-spike-row);
-  border: 1px solid var(--border-spike);
-  border-radius: 8px; font-size: 11px;
-}
-.spike-log-name { font-weight: 600; color: var(--text-primary); }
-.spike-log-date { font-size: 9px; color: var(--text-faint); margin-top: 2px; }
-.spike-log-pct { font-family: Menlo, Monaco, 'Courier New', monospace; font-size: 13px; font-weight: 700; color: var(--price-hot); }
-.spike-log-detail { font-size: 9px; color: var(--text-muted); }
+.empty-state { text-align: center; padding: 30px 16px; }
+.empty-icon { font-size: 30px; margin-bottom: 8px; opacity: .2; }
+.empty-text { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+.empty-hint { font-size: 10px; color: var(--text-faint); margin-top: 3px; }
 
-/* Notification toasts */
-.toast-container {
-  position: fixed; top: 16px; right: 16px;
-  z-index: 999; display: flex; flex-direction: column; gap: 8px; max-width: 340px;
-}
-.toast {
-  background: var(--bg-toast);
-  border: 1px solid var(--border-toast);
-  border-left: 3px solid var(--price-hot);
-  border-radius: 10px; padding: 12px 16px;
-  animation: slideIn 0.35s ease-out;
-  box-shadow: 0 8px 32px rgba(239,68,68,0.15);
-}
-@keyframes slideIn {
-  from { opacity: 0; transform: translateX(40px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-.toast-title { font-size: 13px; font-weight: 700; color: var(--price-hot); margin-bottom: 4px; }
-.toast-body { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
-.toast-detail {
-  margin-top: 6px; font-family: Menlo, Monaco, 'Courier New', monospace;
-  font-size: 18px; font-weight: 700; color: var(--price-hot);
-}
-.toast-time { font-size: 10px; color: var(--text-faint); margin-top: 6px; }
-
-/* Settings */
-.settings-bar {
-  display: flex; align-items: center; gap: 16px;
-  padding: 8px 20px; border-bottom: 1px solid var(--border-card);
-  background: var(--bg-card); flex-shrink: 0;
-}
-.setting-item { display: flex; align-items: center; gap: 6px; }
-.setting-label { font-size: 11px; color: var(--text-muted); font-weight: 500; white-space: nowrap; }
-.setting-input {
-  width: 50px; padding: 3px 6px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-input);
-  border-radius: 4px; color: var(--text-body);
-  text-align: center; font-size: 11px;
-}
-.setting-input:focus { outline: none; border-color: rgba(165,180,252,0.3); }
-.setting-unit { font-size: 10px; color: var(--text-faint); }
-
-.empty-state { text-align: center; padding: 60px 20px; }
-.empty-icon { font-size: 40px; margin-bottom: 14px; opacity: 0.4; }
-.empty-text { font-size: 14px; color: var(--text-faint); font-weight: 500; }
-.empty-hint { font-size: 12px; color: var(--text-fainter); margin-top: 6px; }
-
-@media (max-width: 768px) {
-  .main-layout { flex-direction: column; }
-  .sidebar { width: 100%; border-left: none; border-top: 1px solid var(--border-card); }
-  .settings-bar { flex-wrap: wrap; }
-}
+@media (max-width: 768px) { .main-layout { flex-direction: column; } .sidebar { width: 100%; border-left: none; border-top: 1px solid var(--border-card); } }
 </style>
 </head>
 <body>
@@ -291,368 +168,298 @@ h1 { font-size: 16px; font-weight: 700; color: var(--text-primary); letter-spaci
 <div class="toast-container" id="toastContainer"></div>
 
 <header>
-  <div class="header-row">
-    <div class="header-left">
-      <div class="logo">S</div>
-      <h1>SpikeWatch — Polymarket 温度监控</h1>
-    </div>
-    <div class="controls">
-      <button class="btn" id="btnRefresh" title="立即刷新">刷新</button>
-      <button class="btn danger" id="btnClear" title="清除历史数据">清除</button>
+  <div class="header-top">
+    <div class="brand"><div class="brand-icon">S</div><h1>SpikeWatch</h1></div>
+    <div class="actions">
+      <button class="btn primary" id="btnRefresh">刷新</button>
+      <button class="btn danger" id="btnClear">清除</button>
     </div>
   </div>
-  <div class="status-row">
-    <div class="status-dot" id="statusDot"></div>
-    <span id="statusText">初始化中...</span>
+  <div class="status-bar">
+    <div class="status-pill"><div class="status-dot" id="statusDot"></div><span id="statusText">初始化...</span></div>
+    <div class="api-pill" title="API"><span class="api-dot" id="apiDot"></span><span id="apiLabel">API</span></div>
   </div>
 </header>
 
-<div class="settings-bar">
-  <div class="setting-item">
-    <span class="setting-label">涨幅阈值</span>
-    <input type="number" id="thresholdInput" class="setting-input" value="100" min="20" max="500">
-    <span class="setting-unit">%</span>
-  </div>
-  <div class="setting-item">
-    <span class="setting-label">时间窗口</span>
-    <input type="number" id="windowInput" class="setting-input" value="15" min="1" max="120">
-    <span class="setting-unit">分钟</span>
-  </div>
-  <div class="setting-item">
-    <span class="setting-label">绝对涨幅</span>
-    <input type="number" id="absInput" class="setting-input" value="3" min="1" max="20">
-    <span class="setting-unit">pp</span>
-  </div>
-</div>
-
 <div class="main-layout">
   <div class="content" id="content">
-    <div class="empty-state">
-      <div class="empty-icon">&#9201;</div>
-      <div class="empty-text">正在加载市场数据</div>
-      <div class="empty-hint">从 Polymarket 获取最新温度预测...</div>
+    <div class="wallet-bar">
+      <input type="text" class="wallet-input" id="walletInput" placeholder="添加钱包 0x... 回车">
+      <button class="btn" id="btnAddWallet">添加</button>
+      <button class="btn" id="btnLoadDemo">示例钱包</button>
+    </div>
+    <div id="posOverlay" class="pos-overlay"></div>
+    <div id="feedContainer">
+      <div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">添加钱包查看交易</div><div class="empty-hint">输入 Polymarket 钱包地址</div></div>
     </div>
   </div>
   <div class="sidebar" id="sidebar">
-    <div class="sidebar-title">&#9888; 最近涨幅提醒</div>
-    <div id="spikeLogList">
-      <div class="empty-state" style="padding:30px 0">
-        <div class="empty-text" style="font-size:12px">暂无涨幅记录</div>
-        <div class="empty-hint" style="font-size:10px">出现涨幅信号后会显示在这里</div>
-      </div>
-    </div>
+    <div class="section-header"><span class="section-title">⚠ 涨幅提醒</span></div>
+    <div id="spikeLogList"><div class="empty-state" style="padding:16px 0"><div class="empty-text" style="font-size:11px">暂无提醒</div></div></div>
+    <div id="cityPickerContainer"></div>
   </div>
 </div>
 
 <script>
-const $ = (sel) => document.querySelector(sel);
-
-let markets = [];
-let priceHistory = {};
-let spikeLog = [];
+const $ = s => document.querySelector(s);
+let markets=[], priceHistory={}, spikeLog=[], allCitiesData=[], wallets=[], activities=[], positionsByWallet={}, activeWallet=null;
 let settings = { threshold: 100, windowMinutes: 15, absMin: 3 };
-let pollTimer = null;
-
-const CITY_ORDER = [
-  "beijing","shanghai","shenzhen","guangzhou","wuhan",
-  "wellington","tokyo","taipei","singapore",
-  "london","nyc","chicago"
+let selectedCities = new Set(["beijing","shanghai","shenzhen","guangzhou","wuhan","chongqing","chengdu","qingdao","taipei","hong-kong","lagos","cape-town","denver","mexico-city","sao-paulo","busan","amsterdam","atlanta"]);
+const DEMO = [
+  "0x56687bf447db6ffa42ffe2204a05edaa20f55839",
+  "0x8F10e342092b30D084Bdd813CC1a47233D211CFb",
 ];
 
-function loadFromStorage() {
+function loadStorage() {
+  try { const r=localStorage.getItem('sw_settings'); if(r) settings={...settings,...JSON.parse(r)}; } catch{}
+  try { const r=localStorage.getItem('sw_priceHistory'); if(r) priceHistory=JSON.parse(r); } catch{}
+  try { const r=localStorage.getItem('sw_spikeLog'); if(r) spikeLog=JSON.parse(r); } catch{}
+  try { const r=localStorage.getItem('sw_selectedCities'); if(r) selectedCities=new Set(JSON.parse(r)); } catch{}
+  try { const r=localStorage.getItem('sw_wallets'); if(r) wallets=JSON.parse(r); } catch{}
+}
+function saveStorage() {
+  localStorage.setItem('sw_settings',JSON.stringify(settings));
+  localStorage.setItem('sw_priceHistory',JSON.stringify(priceHistory));
+  localStorage.setItem('sw_spikeLog',JSON.stringify(spikeLog.slice(0,200)));
+  localStorage.setItem('sw_selectedCities',JSON.stringify([...selectedCities]));
+  localStorage.setItem('sw_wallets',JSON.stringify(wallets.map(w=>({address:w.address,name:w.name}))));
+}
+function setStatus(t,ty) { $('#statusText').textContent=t; $('#statusDot').className='status-dot'+(ty?' '+ty:''); }
+function setApi(cls,t) { const d=$('#apiDot'),l=$('#apiLabel'); if(d)d.className='api-dot '+cls; if(l)l.textContent=t||'API'; }
+function fmtTime(ts) { const d=new Date(ts); return d.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}); }
+function fmtFull(ts) { const d=new Date(ts); return d.toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}); }
+function avatar(name) { return (name||'?').charAt(0).toUpperCase(); }
+
+// ---- Wallet ----
+function addWallet(addr) {
+  addr=addr.trim();
+  if(!/^0x[a-fA-F0-9]{40}$/.test(addr)){ alert('无效地址'); return; }
+  if(wallets.some(w=>w.address===addr)) return;
+  wallets.push({address:addr,name:''});
+  saveStorage(); refreshAll();
+}
+function removeWallet(addr) {
+  wallets=wallets.filter(w=>w.address!==addr);
+  delete positionsByWallet[addr];
+  saveStorage(); renderFeed();
+}
+async function refreshAll() {
+  if(wallets.length===0){ renderFeed(); return; }
+  const addrs = wallets.map(w=>w.address).join(',');
   try {
-    const raw = localStorage.getItem('sw_settings');
-    if (raw) settings = { ...settings, ...JSON.parse(raw) };
-  } catch {}
+    const r = await fetch(`/api/activity?users=${encodeURIComponent(addrs)}&limit=80`);
+    if(!r.ok){ setApi('error',String(r.status)); return; }
+    activities = await r.json();
+    setApi('ok','');
+  } catch(e){ setApi('error','超时'); activities=[]; }
+  // Extract names
+  for(const a of activities) {
+    const w = wallets.find(w=>w.address===a._wallet);
+    if(w && a.name) w.name = a.name;
+  }
+  saveStorage();
+  renderFeed();
+}
+
+async function fetchPositions(addr) {
+  if(positionsByWallet[addr]) return;
   try {
-    const raw = localStorage.getItem('sw_priceHistory');
-    if (raw) priceHistory = JSON.parse(raw);
-  } catch {}
-  try {
-    const raw = localStorage.getItem('sw_spikeLog');
-    if (raw) spikeLog = JSON.parse(raw);
-  } catch {}
+    const r = await fetch(`/api/positions?user=${addr}`);
+    if(!r.ok){ positionsByWallet[addr]=[]; return; }
+    positionsByWallet[addr] = await r.json();
+  } catch { positionsByWallet[addr]=[]; }
 }
 
-function saveToStorage() {
-  localStorage.setItem('sw_settings', JSON.stringify(settings));
-  localStorage.setItem('sw_priceHistory', JSON.stringify(priceHistory));
-  localStorage.setItem('sw_spikeLog', JSON.stringify(spikeLog.slice(0, 200)));
-}
+// ---- Render Feed ----
+function renderFeed() {
+  const c = $('#feedContainer');
+  if(wallets.length===0) {
+    c.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">添加钱包查看交易</div><div class="empty-hint">输入 Polymarket 钱包地址</div></div>`;
+    return;
+  }
+  if(activities.length===0) {
+    c.innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-text">暂无交易数据</div><div class="empty-hint">点击刷新获取</div></div>`;
+    return;
+  }
+  const tempCount = activities.filter(a=>a.isTemperature).length;
+  let html = `<div class="feed-header"><span class="feed-title">📋 交易动态</span><span class="feed-count">${activities.length} 条${tempCount>0?' · 🌡️'+tempCount:''}</span></div>`;
+  for(const a of activities.slice(0,60)) {
+    const name = a.name || (a._wallet||'').slice(0,6)+'...'+(a._wallet||'').slice(-4);
+    const side = a.side === 'BUY' ? 'buy' : a.side === 'SELL' ? 'sell' : '';
+    const sideLabel = a.side === 'BUY' ? '买入' : a.side === 'SELL' ? '卖出' : '交易';
+    const outcome = a.outcome || 'Yes';
+    const isYes = outcome.toLowerCase() === 'yes';
+    const usd = a.usdcSize ? '$'+Number(a.usdcSize).toFixed(2) : '';
+    const shares = a.size ? Math.round(a.size) : 0;
+    const isTemp = a.isTemperature;
+    const eventUrl = a.eventSlug ? `https://polymarket.com/zh/event/${a.eventSlug}` : '#';
+    // Parse city/temp from title
+    let cityPart = '', tempPart = '';
+    if(isTemp && a.title) {
+      const cm = a.title.match(/temperature in (.+?) be/);
+      if(cm) cityPart = cm[1];
+      const tm = a.title.match(/(\d+)(?:\s*-\s*(\d+))?\s*[°º]?\s*([cCfF])/);
+      if(tm) tempPart = tm[1]+(tm[3]?.toUpperCase()==='F'?'°F':'°C');
+    }
 
-function setStatus(text, type) {
-  $('#statusText').textContent = text;
-  $('#statusDot').className = 'status-dot' + (type ? ' ' + type : '');
-}
-
-function formatTime(ts) {
-  const d = new Date(ts);
-  return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-}
-
-function showToast(spike) {
-  const el = document.createElement('div');
-  el.className = 'toast';
-  el.innerHTML = `
-    <div class="toast-title">&#9888;&#65039; 价格飙升: ${spike.marketName}</div>
-    <div class="toast-body">${spike.date || ''}</div>
-    <div class="toast-detail">${spike.from}% &#8594; ${spike.to}% (+${spike.pct}%)</div>
-    <div class="toast-time">刚刚</div>`;
-  $('#toastContainer').appendChild(el);
-  setTimeout(() => {
-    el.style.opacity = '0';
-    el.style.transition = 'opacity 0.4s';
-    setTimeout(() => el.remove(), 400);
-  }, 8000);
-
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(`${spike.marketName}: +${spike.pct}%`, {
-      body: `${spike.from}% -> ${spike.to}% (15min)`
+    html += `<div class="trade-row${isTemp?' temp':''}">
+      <div class="trade-avatar${activeWallet===a._wallet?' active':''}" data-addr="${a._wallet}" title="查看持仓">${avatar(name)}</div>
+      <div class="trade-body">
+        <span class="trade-user" data-addr="${a._wallet}">${name}</span>
+        <span class="trade-action">
+          <span class="${side}"> ${sideLabel} </span>
+          ${isTemp ? `<span class="city-name">${cityPart||'?'} ${tempPart||'?'}</span>` : `<a href="${eventUrl}" target="_blank" style="color:var(--text-secondary);text-decoration:none">${(a.title||'?').slice(0,60)}</a>`}
+          <span class="outcome ${isYes?'yes':'no'}">${outcome}</span>
+          ${isTemp ? `<a href="${eventUrl}" target="_blank" style="font-size:9px;color:var(--text-faint);text-decoration:none">↗</a>` : ''}
+        </span>
+      </div>
+      <div class="trade-right">
+        <div class="trade-value">${usd||''}</div>
+        <div class="trade-shares">${shares} 份</div>
+        <div class="trade-time">${fmtFull(a.timestamp)}</div>
+      </div>
+    </div>`;
+  }
+  c.innerHTML = html;
+  // Click handlers
+  c.querySelectorAll('.trade-user,.trade-avatar').forEach(el => {
+    el.addEventListener('click', async () => {
+      const addr = el.dataset.addr;
+      if(activeWallet===addr) { activeWallet=null; renderPosOverlay(); return; }
+      activeWallet=addr;
+      await fetchPositions(addr);
+      renderPosOverlay();
     });
+  });
+}
+
+function renderPosOverlay() {
+  const ov = $('#posOverlay');
+  if(!activeWallet) { ov.innerHTML=''; ov.className='pos-overlay'; return; }
+  const positions = positionsByWallet[activeWallet] || [];
+  const w = wallets.find(w=>w.address===activeWallet);
+  const name = w?.name || activeWallet.slice(0,10)+'...'+activeWallet.slice(-6);
+  const tempCount = positions.filter(p=>p.isTemperature).length;
+  let html = `<div class="pos-panel">
+    <div class="pos-panel-header">
+      <span class="pos-panel-title">📊 ${name} · ${positions.length} 持仓${tempCount>0?' · 🌡️'+tempCount:''}</span>
+      <span class="pos-panel-close" id="posClose">&times;</span>
+      <span class="wallet-remove" data-addr="${activeWallet}" style="cursor:pointer;color:var(--text-faint);font-size:10px;margin-left:8px">移除钱包</span>
+    </div>`;
+  if(positions.length===0) {
+    html += `<div class="pos-row"><span style="color:var(--text-faint)">暂无持仓</span></div>`;
+  } else {
+    for(const p of positions.slice(0,25)) {
+      const pnl = p.cashPnl||0;
+      const pnlCls = pnl>0?'positive':pnl<0?'negative':'';
+      const url = p.eventSlug ? `https://polymarket.com/zh/event/${p.eventSlug}` : '#';
+      html += `<a href="${url}" target="_blank" style="text-decoration:none;color:inherit;display:block">
+        <div class="pos-row" style="${p.isTemperature?'background:var(--bg-red);border-left:2px solid var(--danger)':''}">
+          <div class="pos-info">
+            <div class="pos-title">${p.title||'?'}</div>
+            <div class="pos-meta">${p.outcome||''} · 均价${(p.avgPrice*100).toFixed(1)}¢ · 现${(p.curPrice*100).toFixed(1)}¢${p.isTemperature?' · 🌡️温度':''}</div>
+          </div>
+          <div class="pos-right">
+            <div class="pos-pnl ${pnlCls}">${pnl>0?'+':''}$${Math.abs(pnl).toFixed(0)}</div>
+            <div class="pos-size">${p.size||0}份</div>
+          </div>
+        </div></a>`;
+    }
   }
+  html += `</div>`;
+  ov.innerHTML = html;
+  ov.className = 'pos-overlay open';
+  document.getElementById('posClose')?.addEventListener('click', () => { activeWallet=null; renderPosOverlay(); });
+  ov.querySelector('.wallet-remove')?.addEventListener('click', e => { e.stopPropagation(); removeWallet(activeWallet); activeWallet=null; renderPosOverlay(); renderFeed(); });
 }
 
-function detectSpike(marketId, currentPrice) {
-  const hist = priceHistory[marketId];
-  if (!hist || hist.length < 2) return null;
-  if (currentPrice === null || currentPrice === undefined || isNaN(currentPrice)) return null;
-  if (currentPrice >= 90) return null;
-
-  const now = Date.now();
-  const cutoff = now - settings.windowMinutes * 60 * 1000;
-  let baseline = null;
-  for (let i = hist.length - 1; i >= 0; i--) {
-    if (hist[i].time <= cutoff) { baseline = hist[i].price; break; }
-  }
-  if (baseline === null && hist.length > 0) baseline = hist[0].price;
-  if (baseline === null || baseline <= 0 || isNaN(baseline)) return null;
-
-  const pct = ((currentPrice - baseline) / baseline) * 100;
-  const absChange = currentPrice - baseline;
-  if (absChange < settings.absMin) return null;
-  if (pct < settings.threshold) return null;
-
-  return {
-    pct: Math.round(pct),
-    from: parseFloat(baseline.toFixed(1)),
-    to: parseFloat(currentPrice.toFixed(1))
-  };
+// ---- Markets ----
+async function fetchCities() {
+  try { const r=await fetch('/api/cities'); if(r.ok){ const d=await r.json(); if(d.cities) allCitiesData=d.cities; } } catch{}
 }
-
-function recordPrice(marketId, price) {
-  if (!priceHistory[marketId]) priceHistory[marketId] = [];
-  const hist = priceHistory[marketId];
-  const last = hist[hist.length - 1];
-  if (last && last.price === price) return;
-  hist.push({ price, time: Date.now() });
-  if (hist.length > 200) priceHistory[marketId] = hist.slice(-200);
-}
-
 async function pollMarkets() {
-  let fetched = 0;
-  let source = 'simulated';
+  const t0=Date.now();
   try {
-    const res = await fetch('/api/markets');
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    source = data.source || 'simulated';
-    const marketsData = data.markets || [];
-
-    for (const md of marketsData) {
-      if (md.yesPrice !== null && md.yesPrice !== undefined) {
-        fetched++;
-        recordPrice(md.id, md.yesPrice);
-        const spike = detectSpike(md.id, md.yesPrice);
-        if (spike) {
-          const exists = spikeLog.some(
-            s => s.marketId === md.id &&
-              Math.abs(s.from - spike.from) < 0.5 &&
-              Math.abs(s.to - spike.to) < 0.5 &&
-              (Date.now() - s.ts) < 120000
-          );
-          if (!exists) {
-            const entry = {
-              marketId: md.id,
-              marketName: `${md.cityName} ${md.temperature !== null ? md.temperature : '?'}${md.isFahrenheit ? '°F' : '°C'}${md.isBelow ? '以下' : ''}`,
-              date: md.date,
-              from: spike.from, to: spike.to, pct: spike.pct,
-              ts: Date.now()
-            };
-            spikeLog.unshift(entry);
-            if (spikeLog.length > 200) spikeLog.length = 200;
-            showToast(entry);
+    const r=await fetch('/api/markets'); const ms=Date.now()-t0;
+    if(!r.ok){ setStatus('服务器错误','error'); setApi('error',String(r.status)); return; }
+    const d=await r.json(); setApi('ok',ms+'ms');
+    if(d.cities) { const ex=new Set(allCitiesData.map(c=>c.id)); for(const cid of d.cities) if(!ex.has(cid)) allCitiesData.push({id:cid,name:cid.charAt(0).toUpperCase()+cid.slice(1).replace(/-/g,' ')}); }
+    const mdata=d.markets||[]; let fetched=0;
+    for(const md of mdata) {
+      if(md.yesPrice!=null) {
+        fetched++; recordPrice(md.id,md.yesPrice);
+        const sp=detectSpike(md.id,md.yesPrice);
+        if(sp) {
+          const dup=spikeLog.some(s=>s.marketId===md.id&&Math.abs(s.from-sp.from)<.5&&Math.abs(s.to-sp.to)<.5&&(Date.now()-s.ts)<120000);
+          if(!dup) {
+            const e={marketId:md.id,marketName:`${md.cityName||'?'} ${md.temperature!=null?md.temperature:'?'}${md.isFahrenheit?'°F':'°C'}${md.isBelow?'以下':''}`,date:md.date,from:sp.from,to:sp.to,pct:sp.pct,ts:Date.now(),url:md.url||''};
+            spikeLog.unshift(e); if(spikeLog.length>200) spikeLog.length=200;
+            showToast(e);
           }
         }
       }
     }
-
-    markets = marketsData;
-    if (fetched === 0) {
-      setStatus('未获取到市场数据', 'warn');
-    } else if (source === 'live') {
-      setStatus(`Live · ${fetched} 个市场 · ${new Date().toLocaleTimeString('zh-CN')}`, '');
-    } else {
-      setStatus(`模拟数据 · ${fetched} 个市场 · ${new Date().toLocaleTimeString('zh-CN')}`, 'warn');
-    }
-  } catch (e) {
-    console.error('Poll error:', e);
-    setStatus('服务器连接失败', 'error');
-  }
-
-  saveToStorage();
-  render();
+    markets=mdata;
+    setStatus(`${d.source==='live'?'Live':'模拟'} · ${fetched}个市场`,'');
+  } catch(e){ setStatus('连接失败','error'); setApi('error','超时'); }
+  saveStorage(); renderSidebar();
+}
+function detectSpike(mid,cp) {
+  const h=priceHistory[mid]; if(!h||h.length<2||cp==null||isNaN(cp)||cp>=90) return null;
+  const cut=Date.now()-settings.windowMinutes*60000; let bl=null;
+  for(let i=h.length-1;i>=0;i--) if(h[i].time<=cut){bl=h[i].price;break}
+  if(bl===null&&h.length>0) bl=h[0].price;
+  if(bl===null||bl<=0||isNaN(bl)) return null;
+  const pct=((cp-bl)/bl)*100; if((cp-bl)<settings.absMin||pct<settings.threshold) return null;
+  return {pct:Math.round(pct),from:+bl.toFixed(1),to:+cp.toFixed(1)};
+}
+function recordPrice(mid,p) {
+  if(!priceHistory[mid]) priceHistory[mid]=[];
+  const h=priceHistory[mid]; if(h.length&&h[h.length-1].price===p) return;
+  h.push({price:p,time:Date.now()}); if(h.length>200) priceHistory[mid]=h.slice(-200);
+}
+function showToast(sp) {
+  const el=document.createElement('div'); el.className='toast';
+  el.innerHTML=`<div class="toast-title">⚠️ 价格飙升 ${sp.marketName}</div><div class="toast-detail">${sp.from}% → ${sp.to}% (+${sp.pct}%)</div>`;
+  $('#toastContainer').appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .4s';setTimeout(()=>el.remove(),400)},8000);
 }
 
-function render() {
-  const grid = $('#content');
-  const logEl = $('#spikeLogList');
-
-  if (markets.length === 0) {
-    grid.innerHTML = `<div class="empty-state">
-      <div class="empty-icon">&#9201;</div>
-      <div class="empty-text">暂无活跃市场数据</div>
-      <div class="empty-hint">点击刷新按钮重新获取</div></div>`;
-    return;
-  }
-
-  const spikeIds = new Set(spikeLog.slice(0, 30).map(s => s.marketId));
-
-  const groups = {};
-  for (const m of markets) {
-    if (!groups[m.city]) {
-      groups[m.city] = { cityName: m.cityName, date: m.date, markets: [] };
-    }
-    groups[m.city].markets.push(m);
-  }
-
-  let html = '';
-  for (const [_city, group] of Object.entries(groups).sort((a, b) => {
-    const ia = CITY_ORDER.indexOf(a[0]);
-    const ib = CITY_ORDER.indexOf(b[0]);
-    return ia - ib;
-  })) {
-    const mkts = group.markets;
-    const spikeCount = mkts.filter(m => spikeIds.has(m.id)).length;
-
-    html += `<div class="city-group collapsed">
-      <div class="city-header" onclick="this.parentElement.classList.toggle('collapsed')">
-        <div>
-          <span class="city-name">${group.cityName}</span>
-          ${group.date ? `<span class="city-date">${group.date}</span>` : ''}
-          ${spikeCount > 0 ? `<span class="badge badge-warn" style="margin-left:6px">&#9888;${spikeCount}</span>` : ''}
-        </div>
-        <span class="city-arrow">&#9660;</span>
-      </div>
-      <div class="temp-list">
-        ${mkts.map(m => {
-          const isSpiked = spikeIds.has(m.id);
-          const priceClass = isSpiked ? 'hot' : m.yesPrice >= 70 ? 'high' : m.yesPrice >= 30 ? 'warm' : 'normal';
-
-          const hist = priceHistory[m.id];
-          let changeHtml = '';
-          if (hist && hist.length > 1) {
-            const cutoff = Date.now() - settings.windowMinutes * 60 * 1000;
-            let bl = null;
-            for (let i = hist.length - 1; i >= 0; i--) {
-              if (hist[i].time <= cutoff) { bl = hist[i].price; break; }
-            }
-            if (bl === null) bl = hist[0].price;
-            if (bl && bl > 0) {
-              const pct = ((m.yesPrice - bl) / bl) * 100;
-              if (Math.abs(pct) > 10) {
-                const dir = pct > 0 ? 'up' : 'down';
-                const sign = pct > 0 ? '+' : '';
-                changeHtml = `<span class="temp-change ${dir}">${sign}${Math.round(pct)}%</span>`;
-              }
-            }
-          }
-
-          return `<div class="temp-row${isSpiked ? ' spiked' : ''}">
-            <a href="${m.url || '#'}" target="_blank" style="text-decoration:none;color:inherit;display:contents">
-            <span class="temp-label">
-              ${m.temperature !== null ? m.temperature : '?'}<span class="deg">${m.isFahrenheit ? '°F' : '°C'}</span>
-              ${m.isBelow ? '<span class="below">以下</span>' : ''}
-              ${isSpiked ? '<span style="font-size:10px;">&#9888;</span>' : ''}${m.url ? ' <span style="font-size:9px;color:var(--text-faint)">↗</span>' : ''}
-            </span>
-            <span>
-              <span class="temp-price ${priceClass}">${m.yesPrice.toFixed(1)}%</span>
-              ${changeHtml}
-            </span>
-            </a>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>`;
-  }
-
-  grid.innerHTML = html;
-
-  if (spikeLog.length === 0) {
-    logEl.innerHTML = `<div class="empty-state" style="padding:30px 0">
-      <div class="empty-text" style="font-size:12px">暂无涨幅记录</div>
-      <div class="empty-hint" style="font-size:10px">出现涨幅信号后会显示在这里</div></div>`;
-  } else {
-    logEl.innerHTML = spikeLog.slice(0, 50).map(s => `
-      <div class="spike-log-item" style="display:flex;justify-content:space-between;align-items:center">
-        <div style="min-width:0">
-          <div class="spike-log-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px">${s.marketName || '未知'}</div>
-          <div class="spike-log-date">${s.date || ''} ${formatTime(s.ts)}</div>
-        </div>
-        <div style="text-align:right;flex-shrink:0">
-          <div class="spike-log-pct">+${s.pct}%</div>
-          <div class="spike-log-detail">${s.from}% &#8594; ${s.to}%</div>
-        </div>
-      </div>`).join('');
-  }
+// ---- Sidebar ----
+function renderSidebar() {
+  const el=$('#spikeLogList');
+  if(spikeLog.length===0){ el.innerHTML=`<div class="empty-state" style="padding:16px 0"><div class="empty-text" style="font-size:11px">暂无提醒</div></div>`; }
+  else el.innerHTML=spikeLog.slice(0,25).map((s,i)=>`<a href="${s.url||'#'}" target="_blank" style="text-decoration:none;color:inherit;display:block"><div class="spike-card${i===0&&(Date.now()-s.ts<10000)?' spike-new':''}"><div class="spike-name">${s.marketName}</div><div class="spike-meta"><span class="spike-range">${s.from}% <strong>→ ${s.to}%</strong></span><span class="spike-pct">+${s.pct}%</span><span class="spike-date">${fmtTime(s.ts)}</span></div></div></a>`).join('');
+  renderCityPicker();
+}
+function renderCityPicker() {
+  const c=$('#cityPickerContainer'); if(!c) return;
+  const sel=selectedCities.size, tot=allCitiesData.length;
+  let h=`<div class="city-section"><div class="city-title-row"><span class="city-title">🏠 监控城市</span><span class="city-count">${sel}/${tot}</span></div><div class="city-tags">`;
+  for(const c of allCitiesData) h+=`<span class="city-tag${selectedCities.has(c.id)?' on':''}" data-cid="${c.id}"><span class="tag-dot"></span>${c.name}</span>`;
+  h+=`</div><div class="city-actions"><button class="btn" id="btnSelAll">全选</button><button class="btn" id="btnSelNone">取消</button><button class="btn" id="btnSelCN">中国</button></div></div>`;
+  c.innerHTML=h;
+  c.querySelectorAll('.city-tag').forEach(t=>t.addEventListener('click',()=>{const id=t.dataset.cid;selectedCities.has(id)?selectedCities.delete(id):selectedCities.add(id);saveStorage();renderCityPicker()}));
+  $('#btnSelAll')?.addEventListener('click',()=>{allCitiesData.forEach(c=>selectedCities.add(c.id));saveStorage();renderCityPicker()});
+  $('#btnSelNone')?.addEventListener('click',()=>{selectedCities.clear();saveStorage();renderCityPicker()});
+  $('#btnSelCN')?.addEventListener('click',()=>{const cn=new Set(["beijing","shanghai","shenzhen","guangzhou","wuhan","chongqing","chengdu","qingdao","taipei","hong-kong"]);allCitiesData.forEach(c=>{cn.has(c.id)?selectedCities.add(c.id):selectedCities.delete(c.id)});saveStorage();renderCityPicker()});
 }
 
+// ---- Init ----
 function initUI() {
-  $('#thresholdInput').value = settings.threshold;
-  $('#windowInput').value = settings.windowMinutes;
-  $('#absInput').value = settings.absMin;
-
-  $('#thresholdInput').addEventListener('change', () => {
-    settings.threshold = Math.max(20, Math.min(500, parseInt($('#thresholdInput').value) || 100));
-    saveToStorage();
-  });
-  $('#windowInput').addEventListener('change', () => {
-    settings.windowMinutes = Math.max(1, Math.min(120, parseInt($('#windowInput').value) || 15));
-    saveToStorage();
-  });
-  $('#absInput').addEventListener('change', () => {
-    settings.absMin = Math.max(1, Math.min(20, parseInt($('#absInput').value) || 3));
-    saveToStorage();
-  });
-
-  $('#btnRefresh').addEventListener('click', () => {
-    setStatus('刷新中...', '');
-    pollMarkets();
-  });
-
-  $('#btnClear').addEventListener('click', () => {
-    if (confirm('确定清除所有历史数据？')) {
-      priceHistory = {};
-      spikeLog = [];
-      saveToStorage();
-      render();
-    }
-  });
+  $('#btnRefresh').addEventListener('click',async()=>{setStatus('刷新...','');await pollMarkets();await refreshAll();});
+  $('#btnClear').addEventListener('click',()=>{if(confirm('清除历史？')){priceHistory={};spikeLog=[];saveStorage();renderSidebar()}});
+  $('#btnAddWallet').addEventListener('click',()=>{const a=$('#walletInput').value.trim();if(a){addWallet(a);$('#walletInput').value=''}});
+  $('#walletInput').addEventListener('keydown',e=>{if(e.key==='Enter'){const a=$('#walletInput').value.trim();if(a){addWallet(a);$('#walletInput').value=''}}});
+  $('#btnLoadDemo').addEventListener('click',()=>DEMO.forEach(a=>addWallet(a)));
 }
-
 async function main() {
-  loadFromStorage();
-  initUI();
-
-  if ('Notification' in window && Notification.permission === 'default') {
-    Notification.requestPermission();
-  }
-
-  setStatus('正在发现市场...', '');
-  await pollMarkets();
-
-  pollTimer = setInterval(pollMarkets, 30000);
+  loadStorage(); initUI();
+  await fetchCities(); await pollMarkets();
+  if(wallets.length>0) await refreshAll();
+  setInterval(pollMarkets,30000);
+  setInterval(refreshAll,120000);
 }
-
 main();
 </script>
 </body>
