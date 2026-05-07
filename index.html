@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polymarket 温度市场监控</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0c0e14;
+  --bg-card: rgba(20,22,30,0.7);
+  --bg-card-hover: rgba(99,102,241,0.05);
+  --bg-header: linear-gradient(135deg, #1a1d26, #15171f);
+  --bg-city-header: rgba(30,33,48,0.5);
+  --bg-input: rgba(30,33,48,0.8);
+  --bg-btn: rgba(255,255,255,0.04);
+  --bg-spike-row: rgba(239,68,68,0.06);
+  --bg-spike-card: rgba(239,68,68,0.1);
+  --bg-toast: #1a1d2e;
+
+  --text-primary: #e4e6ec;
+  --text-body: #c8ccd4;
+  --text-secondary: #8892b0;
+  --text-muted: #6b7280;
+  --text-dim: #5a6070;
+  --text-faint: #4b5563;
+  --text-fainter: #374151;
+
+  --border-subtle: rgba(255,255,255,0.03);
+  --border-card: rgba(255,255,255,0.05);
+  --border-btn: rgba(255,255,255,0.1);
+  --border-spike: rgba(239,68,68,0.12);
+  --border-input: rgba(255,255,255,0.08);
+  --border-temp: rgba(255,255,255,0.015);
+  --border-toast: rgba(239,68,68,0.3);
+
+  --scroll-thumb: #2a2d35;
+
+  --price-hot: #f87171;
+  --price-warm: #fbbf24;
+  --price-high: #34d399;
+
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f2f2f7;
+    --bg-card: rgba(255,255,255,0.85);
+    --bg-card-hover: rgba(99,102,241,0.06);
+    --bg-header: linear-gradient(135deg, #e8e8ed, #dddde3);
+    --bg-city-header: rgba(240,240,246,0.7);
+    --bg-input: #fff;
+    --bg-btn: rgba(0,0,0,0.04);
+    --bg-spike-row: rgba(239,68,68,0.05);
+    --bg-spike-card: rgba(239,68,68,0.06);
+    --bg-toast: #fff;
+
+    --text-primary: #1c1c1e;
+    --text-body: #2c2c2e;
+    --text-secondary: #555;
+    --text-muted: #888;
+    --text-dim: #999;
+    --text-faint: #aaa;
+    --text-fainter: #bbb;
+
+    --border-subtle: rgba(0,0,0,0.04);
+    --border-card: rgba(0,0,0,0.06);
+    --border-btn: rgba(0,0,0,0.1);
+    --border-spike: rgba(239,68,68,0.15);
+    --border-input: rgba(0,0,0,0.1);
+    --border-temp: rgba(0,0,0,0.04);
+    --border-toast: rgba(239,68,68,0.2);
+
+    --scroll-thumb: #ccc;
+
+    --price-hot: #dc2626;
+    --price-warm: #d97706;
+    --price-high: #059669;
+
+    color-scheme: light;
+  }
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text-body);
+  font-size: 13px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+body::-webkit-scrollbar { width: 4px; }
+body::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 2px; }
+
+header {
+  background: var(--bg-header);
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-card);
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.header-left { display: flex; align-items: center; gap: 10px; }
+.logo {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 800; color: #fff;
+}
+h1 { font-size: 16px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.3px; }
+.status-row {
+  display: flex; align-items: center;
+  gap: 8px; margin-top: 6px; font-size: 12px; color: var(--text-dim);
+}
+.status-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #22c55e; animation: pulse 2s infinite;
+}
+.status-dot.error { background: #ef4444; animation: none; }
+.status-dot.warn { background: #f59e0b; animation: none; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+.controls { display: flex; gap: 8px; flex-shrink: 0; }
+.btn {
+  padding: 6px 14px; border: 1px solid var(--border-btn);
+  border-radius: 8px; background: var(--bg-btn);
+  color: var(--text-muted); cursor: pointer;
+  font-size: 12px; font-weight: 500; transition: all 0.2s; white-space: nowrap;
+}
+.btn:hover { border-color: rgba(165,180,252,0.25); color: #a5b4fc; background: rgba(99,102,241,0.08); }
+.btn.danger:hover { border-color: rgba(239,68,68,0.3); color: #f87171; background: rgba(239,68,68,0.08); }
+
+.main-layout { display: flex; flex: 1; overflow: hidden; }
+.content { flex: 1; padding: 12px 16px; overflow-y: auto; max-width: 900px; }
+
+.city-group {
+  border: 1px solid var(--border-card);
+  border-radius: 12px; overflow: hidden;
+  background: var(--bg-card); margin-bottom: 10px;
+}
+.city-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; background: var(--bg-city-header);
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer; user-select: none;
+}
+.city-name { font-size: 14px; font-weight: 600; color: var(--text-secondary); }
+.city-date { font-size: 11px; color: var(--text-faint); margin-left: 8px; }
+.city-arrow {
+  font-size: 10px; color: var(--text-faint);
+  transition: transform 0.2s;
+}
+.city-group.collapsed .city-arrow { transform: rotate(-90deg); }
+.city-group.collapsed .temp-list { display: none; }
+
+.temp-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+
+.temp-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px; gap: 8px;
+  border-right: 1px solid var(--border-temp);
+  border-bottom: 1px solid var(--border-temp);
+  transition: background 0.15s;
+}
+.temp-row:hover { background: var(--bg-card-hover); }
+.temp-row.spiked {
+  background: var(--bg-spike-card);
+  box-shadow: inset 2px 0 0 rgba(239,68,68,0.5);
+}
+
+.temp-label {
+  font-size: 13px; font-weight: 500; color: var(--text-secondary);
+  display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+}
+.temp-label .deg { color: var(--text-dim); font-size: 11px; }
+.temp-label .below { font-size: 10px; color: var(--text-faint); }
+
+.temp-price {
+  font-family: Menlo, Monaco, 'Courier New', monospace;
+  font-size: 14px; font-weight: 600; white-space: nowrap; transition: color 0.3s;
+}
+.temp-price.hot { color: var(--price-hot); font-weight: 700; }
+.temp-price.warm { color: var(--price-warm); }
+.temp-price.normal { color: var(--text-muted); }
+.temp-price.high { color: var(--price-high); }
+
+.temp-change { font-size: 10px; font-weight: 600; white-space: nowrap; }
+.temp-change.up { color: var(--price-hot); }
+.temp-change.down { color: var(--price-high); }
+
+.badge {
+  display: inline-block; padding: 1px 6px;
+  border-radius: 4px; font-size: 10px; font-weight: 600;
+}
+.badge-warn { background: rgba(239,68,68,0.15); color: var(--price-hot); }
+
+/* Sidebar: spike log */
+.sidebar {
+  width: 280px; flex-shrink: 0;
+  border-left: 1px solid var(--border-card);
+  padding: 12px 14px; overflow-y: auto;
+  background: var(--bg-card);
+}
+.sidebar-title {
+  font-size: 13px; font-weight: 600; color: var(--text-faint);
+  margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+}
+.spike-log-item {
+  padding: 8px 10px; margin-bottom: 4px;
+  background: var(--bg-spike-row);
+  border: 1px solid var(--border-spike);
+  border-radius: 8px; font-size: 11px;
+}
+.spike-log-name { font-weight: 600; color: var(--text-primary); }
+.spike-log-date { font-size: 9px; color: var(--text-faint); margin-top: 2px; }
+.spike-log-pct { font-family: Menlo, Monaco, 'Courier New', monospace; font-size: 13px; font-weight: 700; color: var(--price-hot); }
+.spike-log-detail { font-size: 9px; color: var(--text-muted); }
+
+/* Notification toasts */
+.toast-container {
+  position: fixed; top: 16px; right: 16px;
+  z-index: 999; display: flex; flex-direction: column; gap: 8px; max-width: 340px;
+}
+.toast {
+  background: var(--bg-toast);
+  border: 1px solid var(--border-toast);
+  border-left: 3px solid var(--price-hot);
+  border-radius: 10px; padding: 12px 16px;
+  animation: slideIn 0.35s ease-out;
+  box-shadow: 0 8px 32px rgba(239,68,68,0.15);
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.toast-title { font-size: 13px; font-weight: 700; color: var(--price-hot); margin-bottom: 4px; }
+.toast-body { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+.toast-detail {
+  margin-top: 6px; font-family: Menlo, Monaco, 'Courier New', monospace;
+  font-size: 18px; font-weight: 700; color: var(--price-hot);
+}
+.toast-time { font-size: 10px; color: var(--text-faint); margin-top: 6px; }
+
+/* Settings */
+.settings-bar {
+  display: flex; align-items: center; gap: 16px;
+  padding: 8px 20px; border-bottom: 1px solid var(--border-card);
+  background: var(--bg-card); flex-shrink: 0;
+}
+.setting-item { display: flex; align-items: center; gap: 6px; }
+.setting-label { font-size: 11px; color: var(--text-muted); font-weight: 500; white-space: nowrap; }
+.setting-input {
+  width: 50px; padding: 3px 6px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-input);
+  border-radius: 4px; color: var(--text-body);
+  text-align: center; font-size: 11px;
+}
+.setting-input:focus { outline: none; border-color: rgba(165,180,252,0.3); }
+.setting-unit { font-size: 10px; color: var(--text-faint); }
+
+.empty-state { text-align: center; padding: 60px 20px; }
+.empty-icon { font-size: 40px; margin-bottom: 14px; opacity: 0.4; }
+.empty-text { font-size: 14px; color: var(--text-faint); font-weight: 500; }
+.empty-hint { font-size: 12px; color: var(--text-fainter); margin-top: 6px; }
+
+@media (max-width: 768px) {
+  .main-layout { flex-direction: column; }
+  .sidebar { width: 100%; border-left: none; border-top: 1px solid var(--border-card); }
+  .settings-bar { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<header>
+  <div class="header-row">
+    <div class="header-left">
+      <div class="logo">S</div>
+      <h1>SpikeWatch — Polymarket 温度监控</h1>
+    </div>
+    <div class="controls">
+      <button class="btn" id="btnRefresh" title="立即刷新">刷新</button>
+      <button class="btn danger" id="btnClear" title="清除历史数据">清除</button>
+    </div>
+  </div>
+  <div class="status-row">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">初始化中...</span>
+  </div>
+</header>
+
+<div class="settings-bar">
+  <div class="setting-item">
+    <span class="setting-label">涨幅阈值</span>
+    <input type="number" id="thresholdInput" class="setting-input" value="100" min="20" max="500">
+    <span class="setting-unit">%</span>
+  </div>
+  <div class="setting-item">
+    <span class="setting-label">时间窗口</span>
+    <input type="number" id="windowInput" class="setting-input" value="15" min="1" max="120">
+    <span class="setting-unit">分钟</span>
+  </div>
+  <div class="setting-item">
+    <span class="setting-label">绝对涨幅</span>
+    <input type="number" id="absInput" class="setting-input" value="3" min="1" max="20">
+    <span class="setting-unit">pp</span>
+  </div>
+</div>
+
+<div class="main-layout">
+  <div class="content" id="content">
+    <div class="empty-state">
+      <div class="empty-icon">&#9201;</div>
+      <div class="empty-text">正在加载市场数据</div>
+      <div class="empty-hint">从 Polymarket 获取最新温度预测...</div>
+    </div>
+  </div>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-title">&#9888; 最近涨幅提醒</div>
+    <div id="spikeLogList">
+      <div class="empty-state" style="padding:30px 0">
+        <div class="empty-text" style="font-size:12px">暂无涨幅记录</div>
+        <div class="empty-hint" style="font-size:10px">出现涨幅信号后会显示在这里</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (sel) => document.querySelector(sel);
+
+let markets = [];
+let priceHistory = {};
+let spikeLog = [];
+let settings = { threshold: 100, windowMinutes: 15, absMin: 3 };
+let pollTimer = null;
+
+const CITY_ORDER = [
+  "beijing","shanghai","shenzhen","guangzhou","wuhan",
+  "wellington","tokyo","taipei","singapore",
+  "london","nyc","chicago"
+];
+
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem('sw_settings');
+    if (raw) settings = { ...settings, ...JSON.parse(raw) };
+  } catch {}
+  try {
+    const raw = localStorage.getItem('sw_priceHistory');
+    if (raw) priceHistory = JSON.parse(raw);
+  } catch {}
+  try {
+    const raw = localStorage.getItem('sw_spikeLog');
+    if (raw) spikeLog = JSON.parse(raw);
+  } catch {}
+}
+
+function saveToStorage() {
+  localStorage.setItem('sw_settings', JSON.stringify(settings));
+  localStorage.setItem('sw_priceHistory', JSON.stringify(priceHistory));
+  localStorage.setItem('sw_spikeLog', JSON.stringify(spikeLog.slice(0, 200)));
+}
+
+function setStatus(text, type) {
+  $('#statusText').textContent = text;
+  $('#statusDot').className = 'status-dot' + (type ? ' ' + type : '');
+}
+
+function formatTime(ts) {
+  const d = new Date(ts);
+  return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function showToast(spike) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = `
+    <div class="toast-title">&#9888;&#65039; 价格飙升: ${spike.marketName}</div>
+    <div class="toast-body">${spike.date || ''}</div>
+    <div class="toast-detail">${spike.from}% &#8594; ${spike.to}% (+${spike.pct}%)</div>
+    <div class="toast-time">刚刚</div>`;
+  $('#toastContainer').appendChild(el);
+  setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transition = 'opacity 0.4s';
+    setTimeout(() => el.remove(), 400);
+  }, 8000);
+
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(`${spike.marketName}: +${spike.pct}%`, {
+      body: `${spike.from}% -> ${spike.to}% (15min)`
+    });
+  }
+}
+
+function detectSpike(marketId, currentPrice) {
+  const hist = priceHistory[marketId];
+  if (!hist || hist.length < 2) return null;
+  if (currentPrice === null || currentPrice === undefined || isNaN(currentPrice)) return null;
+  if (currentPrice >= 90) return null;
+
+  const now = Date.now();
+  const cutoff = now - settings.windowMinutes * 60 * 1000;
+  let baseline = null;
+  for (let i = hist.length - 1; i >= 0; i--) {
+    if (hist[i].time <= cutoff) { baseline = hist[i].price; break; }
+  }
+  if (baseline === null && hist.length > 0) baseline = hist[0].price;
+  if (baseline === null || baseline <= 0 || isNaN(baseline)) return null;
+
+  const pct = ((currentPrice - baseline) / baseline) * 100;
+  const absChange = currentPrice - baseline;
+  if (absChange < settings.absMin) return null;
+  if (pct < settings.threshold) return null;
+
+  return {
+    pct: Math.round(pct),
+    from: parseFloat(baseline.toFixed(1)),
+    to: parseFloat(currentPrice.toFixed(1))
+  };
+}
+
+function recordPrice(marketId, price) {
+  if (!priceHistory[marketId]) priceHistory[marketId] = [];
+  const hist = priceHistory[marketId];
+  const last = hist[hist.length - 1];
+  if (last && last.price === price) return;
+  hist.push({ price, time: Date.now() });
+  if (hist.length > 200) priceHistory[marketId] = hist.slice(-200);
+}
+
+async function pollMarkets() {
+  let fetched = 0;
+  let source = 'simulated';
+  try {
+    const res = await fetch('/api/markets');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    source = data.source || 'simulated';
+    const marketsData = data.markets || [];
+
+    for (const md of marketsData) {
+      if (md.yesPrice !== null && md.yesPrice !== undefined) {
+        fetched++;
+        recordPrice(md.id, md.yesPrice);
+        const spike = detectSpike(md.id, md.yesPrice);
+        if (spike) {
+          const exists = spikeLog.some(
+            s => s.marketId === md.id &&
+              Math.abs(s.from - spike.from) < 0.5 &&
+              Math.abs(s.to - spike.to) < 0.5 &&
+              (Date.now() - s.ts) < 120000
+          );
+          if (!exists) {
+            const entry = {
+              marketId: md.id,
+              marketName: `${md.cityName} ${md.temperature !== null ? md.temperature : '?'}${md.isFahrenheit ? '°F' : '°C'}${md.isBelow ? '以下' : ''}`,
+              date: md.date,
+              from: spike.from, to: spike.to, pct: spike.pct,
+              ts: Date.now()
+            };
+            spikeLog.unshift(entry);
+            if (spikeLog.length > 200) spikeLog.length = 200;
+            showToast(entry);
+          }
+        }
+      }
+    }
+
+    markets = marketsData;
+    if (fetched === 0) {
+      setStatus('未获取到市场数据', 'warn');
+    } else if (source === 'live') {
+      setStatus(`Live · ${fetched} 个市场 · ${new Date().toLocaleTimeString('zh-CN')}`, '');
+    } else {
+      setStatus(`模拟数据 · ${fetched} 个市场 · ${new Date().toLocaleTimeString('zh-CN')}`, 'warn');
+    }
+  } catch (e) {
+    console.error('Poll error:', e);
+    setStatus('服务器连接失败', 'error');
+  }
+
+  saveToStorage();
+  render();
+}
+
+function render() {
+  const grid = $('#content');
+  const logEl = $('#spikeLogList');
+
+  if (markets.length === 0) {
+    grid.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">&#9201;</div>
+      <div class="empty-text">暂无活跃市场数据</div>
+      <div class="empty-hint">点击刷新按钮重新获取</div></div>`;
+    return;
+  }
+
+  const spikeIds = new Set(spikeLog.slice(0, 30).map(s => s.marketId));
+
+  const groups = {};
+  for (const m of markets) {
+    if (!groups[m.city]) {
+      groups[m.city] = { cityName: m.cityName, date: m.date, markets: [] };
+    }
+    groups[m.city].markets.push(m);
+  }
+
+  let html = '';
+  for (const [_city, group] of Object.entries(groups).sort((a, b) => {
+    const ia = CITY_ORDER.indexOf(a[0]);
+    const ib = CITY_ORDER.indexOf(b[0]);
+    return ia - ib;
+  })) {
+    const mkts = group.markets;
+    const spikeCount = mkts.filter(m => spikeIds.has(m.id)).length;
+
+    html += `<div class="city-group collapsed">
+      <div class="city-header" onclick="this.parentElement.classList.toggle('collapsed')">
+        <div>
+          <span class="city-name">${group.cityName}</span>
+          ${group.date ? `<span class="city-date">${group.date}</span>` : ''}
+          ${spikeCount > 0 ? `<span class="badge badge-warn" style="margin-left:6px">&#9888;${spikeCount}</span>` : ''}
+        </div>
+        <span class="city-arrow">&#9660;</span>
+      </div>
+      <div class="temp-list">
+        ${mkts.map(m => {
+          const isSpiked = spikeIds.has(m.id);
+          const priceClass = isSpiked ? 'hot' : m.yesPrice >= 70 ? 'high' : m.yesPrice >= 30 ? 'warm' : 'normal';
+
+          const hist = priceHistory[m.id];
+          let changeHtml = '';
+          if (hist && hist.length > 1) {
+            const cutoff = Date.now() - settings.windowMinutes * 60 * 1000;
+            let bl = null;
+            for (let i = hist.length - 1; i >= 0; i--) {
+              if (hist[i].time <= cutoff) { bl = hist[i].price; break; }
+            }
+            if (bl === null) bl = hist[0].price;
+            if (bl && bl > 0) {
+              const pct = ((m.yesPrice - bl) / bl) * 100;
+              if (Math.abs(pct) > 10) {
+                const dir = pct > 0 ? 'up' : 'down';
+                const sign = pct > 0 ? '+' : '';
+                changeHtml = `<span class="temp-change ${dir}">${sign}${Math.round(pct)}%</span>`;
+              }
+            }
+          }
+
+          return `<div class="temp-row${isSpiked ? ' spiked' : ''}">
+            <a href="${m.url || '#'}" target="_blank" style="text-decoration:none;color:inherit;display:contents">
+            <span class="temp-label">
+              ${m.temperature !== null ? m.temperature : '?'}<span class="deg">${m.isFahrenheit ? '°F' : '°C'}</span>
+              ${m.isBelow ? '<span class="below">以下</span>' : ''}
+              ${isSpiked ? '<span style="font-size:10px;">&#9888;</span>' : ''}${m.url ? ' <span style="font-size:9px;color:var(--text-faint)">↗</span>' : ''}
+            </span>
+            <span>
+              <span class="temp-price ${priceClass}">${m.yesPrice.toFixed(1)}%</span>
+              ${changeHtml}
+            </span>
+            </a>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+
+  grid.innerHTML = html;
+
+  if (spikeLog.length === 0) {
+    logEl.innerHTML = `<div class="empty-state" style="padding:30px 0">
+      <div class="empty-text" style="font-size:12px">暂无涨幅记录</div>
+      <div class="empty-hint" style="font-size:10px">出现涨幅信号后会显示在这里</div></div>`;
+  } else {
+    logEl.innerHTML = spikeLog.slice(0, 50).map(s => `
+      <div class="spike-log-item" style="display:flex;justify-content:space-between;align-items:center">
+        <div style="min-width:0">
+          <div class="spike-log-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px">${s.marketName || '未知'}</div>
+          <div class="spike-log-date">${s.date || ''} ${formatTime(s.ts)}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div class="spike-log-pct">+${s.pct}%</div>
+          <div class="spike-log-detail">${s.from}% &#8594; ${s.to}%</div>
+        </div>
+      </div>`).join('');
+  }
+}
+
+function initUI() {
+  $('#thresholdInput').value = settings.threshold;
+  $('#windowInput').value = settings.windowMinutes;
+  $('#absInput').value = settings.absMin;
+
+  $('#thresholdInput').addEventListener('change', () => {
+    settings.threshold = Math.max(20, Math.min(500, parseInt($('#thresholdInput').value) || 100));
+    saveToStorage();
+  });
+  $('#windowInput').addEventListener('change', () => {
+    settings.windowMinutes = Math.max(1, Math.min(120, parseInt($('#windowInput').value) || 15));
+    saveToStorage();
+  });
+  $('#absInput').addEventListener('change', () => {
+    settings.absMin = Math.max(1, Math.min(20, parseInt($('#absInput').value) || 3));
+    saveToStorage();
+  });
+
+  $('#btnRefresh').addEventListener('click', () => {
+    setStatus('刷新中...', '');
+    pollMarkets();
+  });
+
+  $('#btnClear').addEventListener('click', () => {
+    if (confirm('确定清除所有历史数据？')) {
+      priceHistory = {};
+      spikeLog = [];
+      saveToStorage();
+      render();
+    }
+  });
+}
+
+async function main() {
+  loadFromStorage();
+  initUI();
+
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+
+  setStatus('正在发现市场...', '');
+  await pollMarkets();
+
+  pollTimer = setInterval(pollMarkets, 30000);
+}
+
+main();
+</script>
+</body>
+</html>
