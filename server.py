@@ -311,30 +311,41 @@ def discover_and_fetch():
     events = []
     for tag in ("weather", "temperature"):
         try:
-            resp = fetch_json(f"https://gamma-api.polymarket.com/events?tag_slug={tag}&active=true&closed=false&limit=300", timeout=8)
+            resp = fetch_json(f"https://gamma-api.polymarket.com/events?tag_slug={tag}&active=true&closed=false&limit=300", timeout=6)
             if isinstance(resp, list) and len(resp) > 0:
                 events = resp
                 break
         except:
             continue
 
-    # Strategy 2: per-city fallback
+    # Strategy 2: per-city fallback (limited time budget)
     if not events:
         today = datetime.utcnow()
-        cities_to_try = list(CITY_NAMES.keys())
-        for cid in cities_to_try:
-            for offset in range(3):
-                dt = today + timedelta(days=offset)
-                ev, slug = fetch_city_event(cid, dt)
-                if ev:
-                    mkts = process_markets(ev, slug)
-                    cname = city_name(cid)
-                    for m in mkts:
-                        m["city"] = cid
-                        m["cityName"] = cname
-                    results.extend(mkts)
-                    discovered_cities.add(cid)
+        cities_to_try = list(CITY_NAMES.keys())[:30]
+        deadline = time.time() + 25
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            tasks = []
+            for cid in cities_to_try:
+                for offset in range(3):
+                    dt = today + timedelta(days=offset)
+                    tasks.append((cid, dt))
+            futures = {executor.submit(fetch_city_event, cid, dt): (cid, dt) for cid, dt in tasks}
+            for future in as_completed(futures, timeout=30):
+                if time.time() > deadline:
                     break
+                cid, dt = futures[future]
+                try:
+                    ev, slug = future.result()
+                    if ev:
+                        mkts = process_markets(ev, slug)
+                        cname = city_name(cid)
+                        for m in mkts:
+                            m["city"] = cid
+                            m["cityName"] = cname
+                        results.extend(mkts)
+                        discovered_cities.add(cid)
+                except:
+                    pass
 
         results.sort(key=lambda r: (
             CITY_ORDER.index(r["city"]) if r["city"] in CITY_ORDER else 999,
